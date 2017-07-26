@@ -5,9 +5,9 @@
 #
 NETWORK=mke-pd-blt-network
 
-POSTGRES_USER=mke_police
-POSTGRES_PASSWORD=changeme
-POSTGRES_DB=blotter
+POSTGRES_USER=$(uuidgen)
+POSTGRES_PASSWORD=$(uuidgen)
+POSTGRES_DB=$(uuidgen)
 POSTGRES_NAME=mke-pd-blt-postgres
 
 SCRAPER_NAME=mke-pd-blt-scraper
@@ -24,7 +24,6 @@ fail() {
     echo "Stopping things we started..."
 
     docker stop "$@"
-    docker rm "$@"
 
     exit 1
 }
@@ -42,7 +41,7 @@ POSTGRES=$(docker start ${POSTGRES_NAME} 2> /dev/null || docker run -d \
     --publish-all \
     --network-alias=${POSTGRES_NAME} \
     --name ${POSTGRES_NAME} \
-    postgres:9.6.3)
+    postgres:9.6.3) || exit
 trap "fail ${POSTGRES}" SIGKILL SIGINT EXIT
 
 # Start node, interactive until things are working as expected
@@ -56,7 +55,7 @@ SCRAPER=$(docker start ${SCRAPER_NAME} 2> /dev/null || docker run -d \
     --network-alias=${SCRAPER_NAME} \
     --add-host ${POSTGRES_NAME}:$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${POSTGRES}) \
     --name ${SCRAPER_NAME} \
-    ${SCRAPER_IMAGE})
+    ${SCRAPER_IMAGE}) || exit
 trap "fail ${POSTGRES} ${SCRAPER}" SIGKILL SIGINT EXIT
 
 # Clear trap
