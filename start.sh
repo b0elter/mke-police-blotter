@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
 ##
 # Environment
 #
@@ -14,7 +12,7 @@ POSTGRES_NAME=mke-pd-blt-postgres
 
 # Look for existing POSTGRES env to use instead of random
 UUIDRE="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"
-EXISTING=$(docker inspect -f '{{.Config.Env}}' ${POSTGRES_NAME})
+EXISTING=$(docker inspect -f '{{.Config.Env}}' ${POSTGRES_NAME} 2> /dev/null)
 
 if [ "$?" -eq "0" ]; then
     POSTGRES_USER=$(echo "${EXISTING}" | sed -e "s/.*POSTGRES_USER=\([a-f0-9-]*\).*/\1/")
@@ -27,6 +25,8 @@ SCRAPER_IMAGE=mke-pd-blt-scraper
 
 SERVER_NAME=mke-pd-blt-server
 SERVER_IMAGE=mke-pd-blt-server
+
+set -e
 
 # Create network, ignore output of id or already exists
 docker network create ${NETWORK} &> /dev/null
