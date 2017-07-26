@@ -59,6 +59,7 @@ const parser = new htmlparser.Parser(new htmlparser.DefaultHandler((err, dom) =>
     };
 
     let calls = [];
+    let todo = Math.min(total, 20);
     for (let i = 0; i < 20; i++) {
         let call = rowToCall(i);
         if (call.number) {
@@ -89,6 +90,9 @@ const parser = new htmlparser.Parser(new htmlparser.DefaultHandler((err, dom) =>
             ], (err, res) => {
                 if (err) {
                     console.log(err);
+                }
+                if (--todo === 0) {
+                    process.exit(0);
                 }
             });
         }
