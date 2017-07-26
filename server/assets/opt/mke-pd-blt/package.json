@@ -1,0 +1,9 @@
+{
+  "name": "mke-police-blotter-server",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "moment": "2.18.1",
+    "pg": "7.0.2"
+  }
+}

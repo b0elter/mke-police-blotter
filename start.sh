@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 ##
 # Environment
 #
@@ -12,6 +14,9 @@ POSTGRES_NAME=mke-pd-blt-postgres
 
 SCRAPER_NAME=mke-pd-blt-scraper
 SCRAPER_IMAGE=mke-pd-blt-scraper
+
+SERVER_NAME=mke-pd-blt-server
+SERVER_IMAGE=mke-pd-blt-server
 
 # Create network, ignore output of id or already exists
 docker network create ${NETWORK} &> /dev/null
@@ -41,10 +46,10 @@ POSTGRES=$(docker start ${POSTGRES_NAME} 2> /dev/null || docker run -d \
     --publish-all \
     --network-alias=${POSTGRES_NAME} \
     --name ${POSTGRES_NAME} \
-    postgres:9.6.3) || exit
+    postgres:9.6.3)
 trap "fail ${POSTGRES}" SIGKILL SIGINT EXIT
 
-# Start node, interactive until things are working as expected
+# Scraper fetches remote data and inserts into data store
 SCRAPER=$(docker start ${SCRAPER_NAME} 2> /dev/null || docker run -d \
     -e PGUSER=${POSTGRES_USER} \
     -e PGHOST=${POSTGRES_NAME} \
@@ -55,8 +60,23 @@ SCRAPER=$(docker start ${SCRAPER_NAME} 2> /dev/null || docker run -d \
     --network-alias=${SCRAPER_NAME} \
     --add-host ${POSTGRES_NAME}:$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${POSTGRES}) \
     --name ${SCRAPER_NAME} \
-    ${SCRAPER_IMAGE}) || exit
+    ${SCRAPER_IMAGE})
 trap "fail ${POSTGRES} ${SCRAPER}" SIGKILL SIGINT EXIT
+
+# Server is psuedo RESTful endpoint for data store
+SERVER=$(docker start ${SERVER_NAME} 2> /dev/null || docker run -d \
+    -e PGUSER=${POSTGRES_USER} \
+    -e PGHOST=${POSTGRES_NAME} \
+    -e PGPASSWORD=${POSTGRES_PASSWORD} \
+    -e PGDATABASE=${POSTGRES_DB} \
+    -e PGPORT=5432 \
+    --network ${NETWORK} \
+    --publish-all \
+    --network-alias=${SERVER_NAME} \
+    --add-host ${POSTGRES_NAME}:$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${POSTGRES}) \
+    --name ${SERVER_NAME} \
+    ${SERVER_IMAGE})
+trap "fail ${POSTGRES} ${SCRAPER} ${SERVER}" SIGKILL SIGINT EXIT
 
 # Clear trap
 trap - SIGKILL SIGINT EXIT

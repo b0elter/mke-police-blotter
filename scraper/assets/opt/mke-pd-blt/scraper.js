@@ -1,9 +1,8 @@
 const http = require('http');
 const htmlparser = require('htmlparser');
-const util = require('util');
 const select = require('soupselect-update').select;
 const moment = require('moment');
-const { Pool } = require('pg')
+const { Pool } = require('pg');
 const pool = new Pool();
 
 const options = {
@@ -98,7 +97,7 @@ const parser = new htmlparser.Parser(new htmlparser.DefaultHandler((err, dom) =>
         }
     }
 
-    console.log(util.inspect(calls));
+    console.log(calls);
 }));
 
 http.request(options, (response) => {
