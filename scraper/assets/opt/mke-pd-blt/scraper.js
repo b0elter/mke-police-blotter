@@ -3,6 +3,8 @@ const htmlparser = require('htmlparser');
 const util = require('util');
 const select = require('soupselect-update').select;
 const moment = require('moment');
+const { Pool } = require('pg')
+const pool = new Pool();
 
 const options = {
     host: 'itmdapps.milwaukee.gov',
@@ -61,6 +63,34 @@ const parser = new htmlparser.Parser(new htmlparser.DefaultHandler((err, dom) =>
         let call = rowToCall(i);
         if (call.number) {
             calls.push(call);
+            pool.query(`
+                INSERT INTO calls (
+                    number,
+                    date_time,
+                    location,
+                    district,
+                    nature,
+                    status
+                ) VALUES (
+                    $1,
+                    $2,
+                    $3,
+                    $4,
+                    $5,
+                    $6
+                )
+            `, [
+                call.number,
+                call.date_time.format(),
+                call.location,
+                call.district,
+                call.nature,
+                call.status
+            ], (err, res) => {
+                if (err) {
+                    console.log(err);
+                }
+            });
         }
     }
 
