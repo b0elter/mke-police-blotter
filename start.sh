@@ -40,15 +40,21 @@ POSTGRES=$(docker start ${POSTGRES_NAME} 2> /dev/null || docker run -d \
     -e POSTGRES_DB=${POSTGRES_DB} \
     --network ${NETWORK} \
     --publish-all \
-    --hostname ${POSTGRES_NAME} \
+    --network-alias=${POSTGRES_NAME} \
     --name ${POSTGRES_NAME} \
     postgres:9.6.3)
 trap "fail ${POSTGRES}" SIGKILL SIGINT EXIT
 
 # Start node, interactive until things are working as expected
 SCRAPER=$(docker start ${SCRAPER_NAME} 2> /dev/null || docker run -d \
+    -e PGUSER=${POSTGRES_USER} \
+    -e PGHOST=${POSTGRES_NAME} \
+    -e PGPASSWORD=${POSTGRES_PASSWORD} \
+    -e PGDATABASE=${POSTGRES_DB} \
+    -e PGPORT=5432 \
     --network ${NETWORK} \
-    --link ${POSTGRES_NAME}:${POSTGRES_NAME} \
+    --network-alias=${SCRAPER_NAME} \
+    --add-host ${POSTGRES_NAME}:$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${POSTGRES}) \
     --name ${SCRAPER_NAME} \
     ${SCRAPER_IMAGE})
 trap "fail ${POSTGRES} ${SCRAPER}" SIGKILL SIGINT EXIT
