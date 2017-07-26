@@ -12,6 +12,16 @@ POSTGRES_PASSWORD=$(uuidgen)
 POSTGRES_DB=$(uuidgen)
 POSTGRES_NAME=mke-pd-blt-postgres
 
+# Look for existing POSTGRES env to use instead of random
+UUIDRE="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"
+EXISTING=$(docker inspect -f '{{.Config.Env}}' ${POSTGRES_NAME})
+
+if [ "$?" -eq "0" ]; then
+    POSTGRES_USER=$(echo "${EXISTING}" | sed -e "s/.*POSTGRES_USER=\([a-f0-9-]*\).*/\1/")
+    POSTGRES_PASSWORD=$(echo "${EXISTING}" | sed -e "s/.*POSTGRES_PASSWORD=\([a-f0-9-]*\).*/\1/")
+    POSTGRES_DB=$(echo "${EXISTING}" | sed -e "s/.*POSTGRES_DB=\([a-f0-9-]*\).*/\1/")
+fi
+
 SCRAPER_NAME=mke-pd-blt-scraper
 SCRAPER_IMAGE=mke-pd-blt-scraper
 
