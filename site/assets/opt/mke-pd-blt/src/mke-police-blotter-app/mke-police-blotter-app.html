@@ -1,0 +1,32 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="mke-police-blotter-app">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <h2>Hello [[prop1]]!</h2>
+  </template>
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class MkePoliceBlotterApp extends Polymer.Element {
+      static get is() { return 'mke-police-blotter-app'; }
+      static get properties() {
+        return {
+          prop1: {
+            type: String,
+            value: 'mke-police-blotter-app'
+          }
+        };
+      }
+    }
+
+    window.customElements.define(MkePoliceBlotterApp.is, MkePoliceBlotterApp);
+  </script>
+</dom-module>

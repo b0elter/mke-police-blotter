@@ -9,6 +9,7 @@ POSTGRES_USER=$(uuidgen)
 POSTGRES_PASSWORD=$(uuidgen)
 POSTGRES_DB=$(uuidgen)
 POSTGRES_NAME=mke-pd-blt-postgres
+POSTGRES_IMAGE=postgres:9.6.3
 
 # Look for existing POSTGRES env to use instead of random
 UUIDRE="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"
@@ -25,6 +26,9 @@ SCRAPER_IMAGE=mke-pd-blt-scraper
 
 SERVER_NAME=mke-pd-blt-server
 SERVER_IMAGE=mke-pd-blt-server
+
+SITE_NAME=mke-pd-blt-site
+SITE_IMAGE=mke-pd-blt-site
 
 set -e
 
@@ -53,10 +57,9 @@ POSTGRES=$(docker start ${POSTGRES_NAME} 2> /dev/null || docker run -d \
     -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
     -e POSTGRES_DB=${POSTGRES_DB} \
     --network ${NETWORK} \
-    --publish-all \
     --network-alias=${POSTGRES_NAME} \
     --name ${POSTGRES_NAME} \
-    postgres:9.6.3)
+    ${POSTGRES_IMAGE})
 trap "fail ${POSTGRES}" SIGKILL SIGINT EXIT
 
 # Scraper fetches remote data and inserts into data store
@@ -81,12 +84,21 @@ SERVER=$(docker start ${SERVER_NAME} 2> /dev/null || docker run -d \
     -e PGDATABASE=${POSTGRES_DB} \
     -e PGPORT=5432 \
     --network ${NETWORK} \
-    --publish-all \
     --network-alias=${SERVER_NAME} \
     --add-host ${POSTGRES_NAME}:$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${POSTGRES}) \
     --name ${SERVER_NAME} \
     ${SERVER_IMAGE})
 trap "fail ${POSTGRES} ${SCRAPER} ${SERVER}" SIGKILL SIGINT EXIT
+
+# Site is responsible for serving static page, only needs to see server
+SITE=$(docker start ${SITE_NAME} 2> /dev/null || docker run -d \
+    --network ${NETWORK} \
+    --network-alias=${SITE_NAME} \
+    --add-host ${SERVER_NAME}:$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${SERVER}) \
+    --name ${SITE_NAME} \
+    --publish 80:80 \
+    ${SITE_IMAGE})
+trap "fail ${POSTGRES} ${SCRAPER} ${SERVER} ${SITE}" SIGKILL SIGINT EXIT
 
 # Clear trap
 trap - SIGKILL SIGINT EXIT

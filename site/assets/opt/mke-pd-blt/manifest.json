@@ -1,0 +1,7 @@
+{
+  "name": "mke-police-blotter",
+  "short_name": "mke-police-blotter",
+  "description": "Blotter",
+  "start_url": "/",
+  "display": "standalone"
+}
