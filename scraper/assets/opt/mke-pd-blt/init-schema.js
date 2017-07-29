@@ -10,7 +10,9 @@ client.query(`
       location  TEXT      DEFAULT 'Unknown',
       district  SMALLINT  DEFAULT -1,
       nature    TEXT      DEFAULT 'Unknown',
-      status    TEXT      DEFAULT 'Unknown'
+      status    TEXT      DEFAULT 'Unknown',
+      latitude  REAL,
+      longitude REAL
     );
 `, (err, res) => {
     if (err) {

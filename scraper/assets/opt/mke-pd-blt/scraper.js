@@ -4,11 +4,50 @@ const select = require('soupselect-update').select;
 const moment = require('moment');
 const { Pool } = require('pg');
 const pool = new Pool();
+const NodeGeocoder = require('node-geocoder');
+
+const geocoder = NodeGeocoder({
+    provider: 'google',
+    apiKey: 'AIzaSyDk4xUvKgXj7aa8jdRabamZhVEGs3E6RE4'
+});
 
 const options = {
     host: 'itmdapps.milwaukee.gov',
     path: '/MPDCallData/currentCADCalls/callsService.faces'
 };
+
+function insert(call, callback) {
+    pool.query(`
+            INSERT INTO calls (
+                number,
+                date_time,
+                location,
+                district,
+                nature,
+                status,
+                latitude,
+                longitude
+            ) VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6,
+                $7,
+                $8
+            )
+        `, [
+        call.number,
+        call.date_time.format(),
+        call.location,
+        call.district,
+        call.nature,
+        call.status,
+        call.latitude || null,
+        call.longitude || null
+    ], callback);
+}
 
 const parser = new htmlparser.Parser(new htmlparser.DefaultHandler((err, dom) => {
     if (err) {
@@ -62,38 +101,39 @@ const parser = new htmlparser.Parser(new htmlparser.DefaultHandler((err, dom) =>
     for (let i = 0; i < 20; i++) {
         let call = rowToCall(i);
         if (call.number) {
-            calls.push(call);
-            pool.query(`
-                INSERT INTO calls (
-                    number,
-                    date_time,
-                    location,
-                    district,
-                    nature,
-                    status
-                ) VALUES (
-                    $1,
-                    $2,
-                    $3,
-                    $4,
-                    $5,
-                    $6
-                )
-            `, [
-                call.number,
-                call.date_time.format(),
-                call.location,
-                call.district,
-                call.nature,
-                call.status
-            ], (err, res) => {
-                if (err) {
-                    console.log(err);
-                }
-                if (--todo === 0) {
-                    process.exit(0);
-                }
-            });
+
+            // sanitize location
+            call.location = call.location.replace(/,MKE$/, ', Milwaukee, WI');
+
+            if (call.location.length >= 5) {
+                // attempt geocode lookup
+                geocoder.geocode('29 champs elysée paris', function(err, res) {
+                    if (res && res.length) {
+                        call.latitude = res[0].latitude;
+                        call.longitude = res[0].longitude;
+                    }
+                    insert(call, (err, res) => {
+                        if (err) {
+                            console.log(err);
+                        }
+                        if (--todo === 0) {
+                            process.exit(0);
+                        }
+                    });
+                    calls.push(call);
+                });
+            }
+            else {
+                insert(call, (err, res) => {
+                    if (err) {
+                        console.log(err);
+                    }
+                    if (--todo === 0) {
+                        process.exit(0);
+                    }
+                });
+                calls.push(call);
+            }
         }
     }
 
