@@ -1,0 +1,66 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/google-map/google-map.html">
+<link rel="import" href="../../bower_components/google-map/google-map-marker.html">
+
+<dom-module id="mke-police-blotter-call">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+      google-map {
+        height: 200px;
+      }
+    </style>
+
+    <paper-card heading="[[call.nature]]">
+      <template is="dom-if" if="[[call.latitude]]">
+        <style>
+          google-map {
+            height: 300px;
+          }
+        </style>
+        <google-map
+          fit-to-marker
+          api-key="AIzaSyDk4xUvKgXj7aa8jdRabamZhVEGs3E6RE4"
+          latitude="[[call.latitude]]"
+          longitude="[[call.longitude]]"
+          zoom="18">
+          <google-map-marker
+            slot="markers"
+            latitude="[[call.latitude]]"
+            longitude="[[call.longitude]]"
+            draggable="false">
+            [[call.location]]
+          </google-map-marker>
+        </google-map>
+      </template>
+      <div class="card-content">
+        <ul>
+          <li>[[call.location]]</li>
+          <li>[[call.date_time]]</li>
+          <li>[[call.status]]</li>
+        </ul>
+      </div>
+    </paper-card>
+
+  </template>
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class MkePoliceBlotterCall extends Polymer.Element {
+      static get is() { return 'mke-police-blotter-call'; }
+      static get properties() {
+        return {
+          call: Object
+        };
+      }
+    }
+
+    window.customElements.define(MkePoliceBlotterCall.is, MkePoliceBlotterCall);
+  </script>
+</dom-module>

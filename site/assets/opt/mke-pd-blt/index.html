@@ -15,13 +15,6 @@
     <link rel="import" href="/src/mke-police-blotter-app/mke-police-blotter-app.html">
   </head>
   <body>
-    <iron-ajax url="/calls" last-response="{{data}}" auto></iron-ajax>
-    <iron-list items="[[data]]" as="item">
-      <template>
-        <div>
-          Name: [[item.location]]
-        </div>
-      </template>
-    </iron-list>
+    <mke-police-blotter-app></mke-police-blotter-app>
   </body>
 </html>

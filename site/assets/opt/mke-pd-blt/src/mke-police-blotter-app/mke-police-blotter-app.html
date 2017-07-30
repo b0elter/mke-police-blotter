@@ -1,4 +1,7 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/iron-list/iron-list.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../mke-police-blotter-call/mke-police-blotter-call.html">
 
 <dom-module id="mke-police-blotter-app">
   <template>
@@ -7,7 +10,18 @@
         display: block;
       }
     </style>
-    <h2>Hello [[prop1]]!</h2>
+
+    <iron-ajax
+      auto
+      url="/calls"
+      params='{}'
+      handle-as="json"
+      last-response="{{data}}"></iron-ajax>
+    <iron-list items="[[data]]" as="call" >
+      <template>
+        <mke-police-blotter-call call="[[call]]"></mke-police-blotter-call>
+      </template>
+    </iron-list>
   </template>
 
   <script>
@@ -22,7 +36,10 @@
           prop1: {
             type: String,
             value: 'mke-police-blotter-app'
-          }
+          },
+            data: {
+              type: Object
+            }
         };
       }
     }
