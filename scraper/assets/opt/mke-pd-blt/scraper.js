@@ -107,7 +107,7 @@ const parser = new htmlparser.Parser(new htmlparser.DefaultHandler((err, dom) =>
 
             if (call.location.length >= 5) {
                 // attempt geocode lookup
-                geocoder.geocode('29 champs elysée paris', function(err, res) {
+                geocoder.geocode(call.location, function(err, res) {
                     if (res && res.length) {
                         call.latitude = res[0].latitude;
                         call.longitude = res[0].longitude;
