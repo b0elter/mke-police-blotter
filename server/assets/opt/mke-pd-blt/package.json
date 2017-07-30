@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "moment": "2.18.1",
-    "pg": "7.0.2"
+    "pg": "7.0.2",
+    "sql": "^0.76.1"
   }
 }
