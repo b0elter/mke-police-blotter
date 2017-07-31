@@ -9,8 +9,9 @@
       :host {
         display: block;
       }
-      google-map {
-        height: 200px;
+
+      paper-card {
+        width: 100%;
       }
     </style>
 
@@ -18,10 +19,11 @@
       <template is="dom-if" if="[[call.latitude]]">
         <style>
           google-map {
-            height: 300px;
+            height: 150px;
           }
         </style>
         <google-map
+          disable-zoom
           fit-to-marker
           api-key="AIzaSyDk4xUvKgXj7aa8jdRabamZhVEGs3E6RE4"
           latitude="[[call.latitude]]"
@@ -36,13 +38,15 @@
           </google-map-marker>
         </google-map>
       </template>
-      <div class="card-content">
-        <ul>
-          <li>[[call.location]]</li>
-          <li>[[call.date_time]]</li>
-          <li>[[call.status]]</li>
-        </ul>
-      </div>
+      <template is="dom-if" if="[[call.status]]">
+        <div class="card-content">
+          <ul>
+            <li>[[call.location]]</li>
+            <li>[[call.date_time]]</li>
+            <li>[[call.status]]</li>
+          </ul>
+        </div>
+      </template>
     </paper-card>
 
   </template>
