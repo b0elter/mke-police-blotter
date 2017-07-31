@@ -1,6 +1,8 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../../bower_components/iron-list/iron-list.html">
+<link rel="import" href="../../bower_components/iron-scroll-threshold/iron-scroll-threshold.html">
 <link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../mke-police-blotter-call/mke-police-blotter-call.html">
 
 <dom-module id="mke-police-blotter-app">
@@ -14,14 +16,18 @@
     <iron-ajax
       auto
       url="/calls"
-      params='{}'
+      params='{{queryParams}}'
       handle-as="json"
-      last-response="{{data}}"></iron-ajax>
-    <iron-list items="[[data]]" as="call" >
-      <template>
-        <mke-police-blotter-call call="[[call]]"></mke-police-blotter-call>
-      </template>
-    </iron-list>
+      on-response="dataSuccess"></iron-ajax>
+    <div class="fit vertical layout">
+      <iron-scroll-threshold on-lower-threshold="loadMoreData" id="threshold">
+        <iron-list scroll-target="threshold" items="[[calls]]" as="call">
+          <template>
+            <mke-police-blotter-call call="[[call]]"></mke-police-blotter-call>
+          </template>
+        </iron-list>
+      </iron-scroll-threshold>
+    </div>
   </template>
 
   <script>
@@ -30,17 +36,47 @@
      * @polymer
      */
     class MkePoliceBlotterApp extends Polymer.Element {
-      static get is() { return 'mke-police-blotter-app'; }
+      static get is() {
+        return 'mke-police-blotter-app';
+      }
+
       static get properties() {
         return {
-          prop1: {
-            type: String,
-            value: 'mke-police-blotter-app'
+          calls: {
+            type: Array,
+            value: []
           },
-            data: {
-              type: Object
-            }
+          start: {
+            type: Number,
+            value: 0
+          },
+          limit: {
+            type: Number,
+            value: 10
+          },
+          queryParams: {
+            type: Object,
+            computed: 'getQueryParams(start, limit)'
+          }
         };
+      }
+
+      dataSuccess(e) {
+        this.calls = this.calls.concat(e.detail.__data.response);
+        console.log(this.$.threshold);
+        this.$.threshold.clearTriggers();
+      }
+
+      getQueryParams(start, limit) {
+        return {
+          start: start,
+          limit: limit
+        };
+      }
+
+      loadMoreData() {
+        console.log(this.start);
+        this.start += this.limit;
       }
     }
 
