@@ -31,6 +31,5 @@ $ ./start.sh # run the things
 - Add notification subscriptions
 - Websockets, why not?
 - Add paging on both scraper and site
-- Fix up scraper and schema to support updating a call
 - HTTPS
 - Monitoring and Error Reporting

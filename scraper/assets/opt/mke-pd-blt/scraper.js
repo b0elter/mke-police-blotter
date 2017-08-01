@@ -36,7 +36,7 @@ function insert(call, callback) {
                 $6,
                 $7,
                 $8
-            )
+            ) RETURNING id, location;
         `, [
         call.number,
         call.date_time.format(),
@@ -47,6 +47,29 @@ function insert(call, callback) {
         call.latitude || null,
         call.longitude || null
     ], callback);
+}
+
+function geocode(id, location, callback) {
+    if (location && location.length >= 5) {
+        // attempt geocode lookup
+        let latitude = null;
+        let longitude = null;
+        geocoder.geocode(location, (err, res) => {
+            if (res && res.length) {
+                latitude = res[0].latitude;
+                longitude = res[0].longitude;
+                pool.query(`UPDATE calls SET latitude = $1, longitude = $2 WHERE id = $3;`, [latitude, longitude, id], (err, res) => {
+                    callback();
+                });
+            }
+            else {
+                callback();
+            }
+        });
+    }
+    else {
+        callback();
+    }
 }
 
 const parser = new htmlparser.Parser(new htmlparser.DefaultHandler((err, dom) => {
@@ -105,35 +128,22 @@ const parser = new htmlparser.Parser(new htmlparser.DefaultHandler((err, dom) =>
             // sanitize location
             call.location = call.location.replace(/,MKE$/, ', Milwaukee, WI');
 
-            if (call.location.length >= 5) {
-                // attempt geocode lookup
-                geocoder.geocode(call.location, function(err, res) {
-                    if (res && res.length) {
-                        call.latitude = res[0].latitude;
-                        call.longitude = res[0].longitude;
-                    }
-                    insert(call, (err, res) => {
-                        if (err) {
-                            console.log(err);
-                        }
+            insert(call, (err, res) => {
+                if (err) {
+                    console.log(err);
+                }
+                if (res && res.rows.length) {
+                    geocode(res.rows[0].id, res.rows[0].location, function () {
                         if (--todo === 0) {
                             process.exit(0);
                         }
                     });
-                    calls.push(call);
-                });
-            }
-            else {
-                insert(call, (err, res) => {
-                    if (err) {
-                        console.log(err);
-                    }
-                    if (--todo === 0) {
-                        process.exit(0);
-                    }
-                });
-                calls.push(call);
-            }
+                }
+                else if (--todo === 0) {
+                    process.exit(0);
+                }
+            });
+            calls.push(call);
         }
     }
 
